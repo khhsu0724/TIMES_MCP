@@ -87,3 +87,6 @@ def main():
     # Start server
     logger.info('Starting xray-server')
     mcp.run('stdio')
+
+if __name__ == "__main__":
+    main()
