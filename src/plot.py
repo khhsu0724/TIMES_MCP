@@ -5,7 +5,6 @@ import os
 from math import pi
 from numpy import genfromtxt
 from pathlib import Path
-import plotly.graph_objects as go
 import io
 import base64
 
@@ -120,48 +119,3 @@ def check_pol(s: str):
     allowed = {"X", "Y", "Z"}
     if not (set(s).issubset(allowed) and len(s) == len(set(s))):
         raise RuntimeError(f"Invalid Polarization: {s}")
-
-if __name__ == '__main__':
-    _set_mpl_style()
-    _check_pol("AXZ")
-    exit()
-    x, y, z = get_RIXS_iter_all("/Users/seanhsu/Desktop/School/Research/Program File/ED/mcpruns/b95572a68fe9")
-    eloss = True
-
-    fig, ax = plt.subplots(figsize=(8,8))
-    eloss = True
-    if (eloss):
-        ax.pcolormesh(x,y,z,cmap="terrain")
-        ax.set_ylim([-2,10])
-        ax.set_xlim(np.min(x),np.max(x))
-        ax.axhline(0,ls="--",c="yellow",lw=2.5)
-        ax.set_xlabel("Incident Energy (eV)")
-        ax.set_ylabel("Energy Loss (eV)")
-    else:
-        ax.pcolormesh(x-y,x,z,cmap="terrain")
-        lims = np.linspace(-1000,1000,1000)
-        plt.plot(lims,lims,ls="--",c="yellow",lw=2.5)
-        ax.set_xlim(np.min(x-y),np.max(x-y))
-        ax.set_ylim(np.min(x),np.max(x))
-        ax.set_ylabel("Incident Energy (eV)")
-        ax.set_xlabel("Emission Energy (eV)")
-
-    ax.set_facecolor(plt.cm.terrain(0))
-    ax.set_title("RIXS")
-
-    plt.show()
-    buf = io.BytesIO()
-    dpi = 50
-    width_px = fig.get_figwidth() * dpi
-    height_px = fig.get_figheight() * dpi
-    print(f"Pixel dimensions: {int(width_px)} × {int(height_px)}")
-    fig.savefig(buf, format="png", bbox_inches="tight")
-    buf.seek(0)
-    img_bytes = buf.read()
-    plt.close(fig)
-
-    # # Encode to base64 string
-    img_base64 = base64.b64encode(img_bytes).decode()
-    print(img_base64)
-    # with open("test.png","wb") as f:
-    #     f.write(base64.b64decode(img_base64))

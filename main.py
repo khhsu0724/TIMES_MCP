@@ -7,9 +7,9 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Optional, Dict, Any
-from inputs import *
-from plot import *
-from util import *
+from src.inputs import *
+from src.plot import *
+from src.util import *
 
 # Configure logging
 logging.basicConfig(
@@ -21,13 +21,63 @@ logger = logging.getLogger(__name__)
 # Initialize MCP server
 mcp = FastMCP()
 
-# @mcp.tool(
-#     name = "list_env",
-#     description = "List Environmental variables"
-# )
-# def list_env() -> dict:
-#     """Return all environment variables visible to this MCP server."""
-#     return dict(os.environ)
+def check_mcp_status(run_dir: str) -> Dict[str, Any]:
+    """
+    Check if an MCP run has finished or is still incomplete.
+    Designed for LLM calls.
+    A run is considered finished only if the second-to-last line
+    of ed.out contains 'Total elapsed time'.
+    """
+    result_file = os.path.join(run_dir, "ed.out")
+    error_file = os.path.join(run_dir, "ed.err")
+
+
+    # --- Check error file first ---
+    if os.path.exists(error_file) and os.path.getsize(error_file) > 0:
+        return {
+            "status": "error",
+            "message": "MCP run encountered an error.",
+            "path": error_file
+        }
+
+    if os.path.exists(result_file):
+        try:
+            # Read last two lines efficiently
+            with open(result_file, "rb") as f:
+                f.seek(0, os.SEEK_END)
+                filesize = f.tell()
+                blocksize = 1024
+                data = b""
+                while filesize > 0 and data.count(b"\n") < 3:  # need at least 2 lines
+                    read_size = min(blocksize, filesize)
+                    f.seek(filesize - read_size)
+                    data = f.read(read_size) + data
+                    filesize -= read_size
+                lines = data.splitlines()
+
+            if len(lines) >= 2 and b"Total elapsed time" in lines[-2]:
+                return {
+                    "status": "finished",
+                    "message": "MCP run completed successfully.",
+                    "path": result_file
+                }
+            else:
+                return {
+                    "status": "incomplete",
+                    "message": "MCP run has not finished yet.",
+                }
+
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Error reading result file: {e}"
+            }
+
+    return {
+        "status": "incomplete",
+        "message": "MCP run has not finished yet.",
+    }
+
 
 def _make_run_dir(base: Optional[str] = None) -> Path:
     """Create a unique run directory under base (or system temp)."""
@@ -292,7 +342,7 @@ async def run_multiplet_binary(
     install_dir: str,
     input_text: str,
     run_dir: Optional[str] = None,
-    timeout: float = 60.0,
+    timeout: float = 180.0,
     env_vars: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """
@@ -317,7 +367,7 @@ async def run_multiplet_binary(
     run_dir: str, optional
         Run directory if it's provided.
     timeout : float
-        Timeout in seconds for the run (default 60).
+        Timeout in seconds for the run (default 180).
     env_vars : dict, optional
         Extra environment variables (merged with os.environ).
     Returns

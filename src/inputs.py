@@ -81,7 +81,7 @@ def create_multiplet_input(input_params):
             "NEDOS": 2000,
             "AB": [-20, 20],
             "ABMAX": 30, # Use ABMAX as default
-            "INCIDENT": [20, 101, -1],
+            "INCIDENT": [8, 21, -1],
             "CROSS": False,
             "Edge": "L"
         }
@@ -407,45 +407,3 @@ def get_dParams(element: str, valence: int):
         raise ValueError(f"No atomic data found for {element} with valence {valence}")
 
     return holes, atomic_data[element][valence]
-
-if __name__ == '__main__':
-    # Example usage with a JSON-style dictionary
-    example_input = {
-        "CONTROL": {
-        },
-        "CELL": {
-            "Coordination": "test",
-            "Holes": 5,
-        },
-        "PHOTON": {
-            "XAS": True,
-            "pvin": [1, 1, 1],
-            "pvout": [1, 1, 1],
-            "solver": 4,
-            "ABMAX": 30,
-            "INCIDENT": [-5.4, 1.2, 65],
-            "EM": 10,
-            "epsab": 0.25,
-            "epsloss": 0.2,
-        }
-    }
-    input_params = None
-    tenDQ = None
-    if input_params is None:
-        input_params = InputParams()
-    else:
-        input_params = InputParams(**input_params.model_dump())
-
-    if tenDQ is not None:
-        input_params.CONTROL.CF = [0, 0, tenDQ, tenDQ, tenDQ]
-
-
-    holes, dcontrol = get_dParams("Ni", 2)
-    input_params.CELL.Holes = holes
-    # input_params.CONTROL = ControlParams(**{**dcontrol, **input_params.CONTROL.model_dump()})
-    # print(dcontrol)
-    input_params.CONTROL = input_params.CONTROL.model_copy(update=dcontrol)
-    print(input_params.model_dump())
-    # Print the generated content
-    input_text = create_multiplet_input(input_params)   
-    print(input_text)

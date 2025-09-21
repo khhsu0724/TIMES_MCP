@@ -49,12 +49,3 @@ def extract_ground_state(filename):
                     state_dict[key.strip()] = float(val.strip())
                 return state_dict
     return {}
-
-# Example usage:
-filename = "/Users/seanhsu/Desktop/School/Research/Program File/ED/mcpruns/b95572a68fe9/eig.txt"
-data = extract_occupation(filename)
-print(data)
-
-filename = "/Users/seanhsu/Desktop/School/Research/Program File/ED/mcpruns/b95572a68fe9/ed.out"
-data = extract_ground_state(filename)
-print(data)
